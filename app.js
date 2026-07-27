@@ -40,7 +40,7 @@ const state = {
   spot: 'all', // 낚시 — 장소 유형(방파제/갯바위/낚시점)
   fish: 'all', // 낚시 — 어종
   q: '',
-  pickOnly: false, // Pick(내가 추가한 곳)만 보기
+  list: 'all', // all / mine(=Pick) / work(=일하기 좋은)
   picking: false,
 }
 
@@ -481,7 +481,9 @@ function currentItems() {
       state.tab === 'craft' ? CRAFT_CATS.has(p.cat)
         : state.tab === 'shop' ? p.cat === 'shop'
           : !CRAFT_CATS.has(p.cat) && p.cat !== 'shop')
-    if (state.pickOnly) items = items.filter((p) => p.src === 'mine')
+    if (state.list === 'mine') items = items.filter((p) => p.src === 'mine')
+    // 콘센트 있는 자리에서 노트북을 펴려는 용도. 태그는 places.json 에서 손으로 붙인다
+    if (state.list === 'work') items = items.filter((p) => (p.tags ?? []).includes('일하기좋은'))
     if (state.tab === 'eat' && state.cat !== 'all') {
       items = items.filter((p) =>
         state.cat === 'etc'
@@ -560,13 +562,15 @@ function priceLine(p) {
 function cardEat(p) {
   // Pick = 사용자가 직접 넣은 곳. 이름 바로 옆에 붙여 눈에 먼저 들어오게 한다
   const pick = p.src === 'mine' ? '<span class="pill mine">⭐ Pick</span>' : ''
+  // 콘센트 있는 자리를 찾는 사람에겐 이게 분류보다 먼저 보여야 한다
+  const work = (p.tags ?? []).includes('일하기좋은') ? '<span class="pill work">💻 일하기 좋은</span>' : ''
   const tags = []
   if (p.src === 'claude') tags.push('<span class="pill rec">추천받음</span>')
   if (p.conf === 'verified') tags.push('<span class="pill">네이버 확인</span>')
   return `<article class="card" data-id="${p.id}">
     ${thumb(p.photos[0], state.tab === 'shop' ? '🎁' : state.tab === 'craft' ? '🧑‍🎨' : '🍽')}
     <div>
-      <h3>${esc(p.name)} ${pick} ${p.__d != null ? `<span class="dist">${km(p.__d)}</span>` : ''}</h3>
+      <h3>${esc(p.name)} ${pick}${work} ${p.__d != null ? `<span class="dist">${km(p.__d)}</span>` : ''}</h3>
       <p class="meta">${esc(kindLine(p))}${p.score ? ` · ★${p.score}` : ''}</p>
       ${state.tab === 'craft' ? priceLine(p) : `<p class="blurb">${esc(p.blurb ?? '')}</p>`}
       <p class="hours">${hoursLine(p)}</p>
@@ -668,8 +672,8 @@ function render() {
   const card = state.tab === 'water' ? cardWater : state.tab === 'fish' ? cardFish : cardEat
   list.innerHTML = items.length
     ? items.map(card).join('')
-    : `<p class="empty">${state.pickOnly && state.origin
-        ? `반경 ${state.radius}km 안에 Pick 한 곳이 없어요.`
+    : `<p class="empty">${state.list !== 'all' && state.origin
+        ? `반경 ${state.radius}km 안에 ${state.list === 'mine' ? 'Pick 한' : '일하기 좋은'} 곳이 없어요. 반경을 넓혀보세요.`
         : state.origin ? `반경 ${state.radius}km 안에 없어요. 반경을 넓혀보세요.` : '조건에 맞는 곳이 없어요.'}</p>`
 
   drawMarkers(items.length ? items : tabSource())
@@ -1203,7 +1207,7 @@ $$('#list-filter .f').forEach((b) => {
   b.onclick = () => {
     $$('#list-filter .f').forEach((x) => x.classList.remove('on'))
     b.classList.add('on')
-    state.pickOnly = b.dataset.pick === 'mine'
+    state.list = b.dataset.pick
     render()
   }
 })
@@ -1309,46 +1313,50 @@ $('#btn-back').onclick = () => { $('#detail').hidden = true }
     return best
   }
 
-  const grip = $('#grip')
+  // 손잡이 막대 하나만 잡게 하면 폰에서 너무 좁다 — 머리글 줄까지 잡힌다
+  const handles = [$('#grip'), $('#sheet-head')]
   let drag = null
 
-  grip.addEventListener('pointerdown', (e) => {
-    drag = { y: e.clientY, h: sheet.getBoundingClientRect().height, moved: false }
-    // 트랜지션 먼저 끈다 — 끄는 동안 높이가 뒤늦게 따라오면 손가락과 어긋난다
-    sheet.style.transition = 'none'
+  const down = (el) => (e) => {
+    drag = { y: e.clientY, h: sheet.getBoundingClientRect().height, moved: false, el }
+    sheet.classList.add('dragging') // 트랜지션을 끊는다. 안 끊으면 손가락보다 늦게 따라온다
     // 포인터 캡처가 실패해도(합성 이벤트 등) 드래그 자체는 계속돼야 한다
-    try { grip.setPointerCapture(e.pointerId) } catch { /* 무시 */ }
+    try { el.setPointerCapture(e.pointerId) } catch { /* 무시 */ }
     e.preventDefault()
-  })
+  }
 
-  grip.addEventListener('pointermove', (e) => {
+  const move = (e) => {
     if (!drag) return
     const dy = drag.y - e.clientY // 위로 끌면 +
     if (Math.abs(dy) > 4) drag.moved = true
     const min = heightOf('lo')
     const max = heightOf('hi')
     sheet.style.height = `${Math.max(min, Math.min(max, drag.h + dy))}px`
-  })
+  }
 
   const end = (e) => {
     if (!drag) return
     const px = sheet.getBoundingClientRect().height
-    sheet.style.transition = ''
-    sheet.style.height = ''
-    if (drag.moved) {
-      sheet.className = settle(px)
-    } else {
-      // 그냥 눌렀을 때 — 예전 동작 유지
-      sheet.className = sheet.classList.contains('mid') ? 'hi' : sheet.classList.contains('hi') ? 'lo' : 'mid'
-    }
+    const { moved, el } = drag
     drag = null
+    sheet.style.height = ''
+    sheet.classList.remove('dragging')
+    // 끌었으면 가장 가까운 단으로, 그냥 눌렀으면 예전처럼 3단 토글
+    sheet.className = moved
+      ? settle(px)
+      : (sheet.classList.contains('mid') ? 'hi' : sheet.classList.contains('hi') ? 'lo' : 'mid')
     try {
-      if (e?.pointerId != null && grip.hasPointerCapture(e.pointerId)) grip.releasePointerCapture(e.pointerId)
+      if (e?.pointerId != null && el?.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId)
     } catch { /* 무시 */ }
     setTimeout(() => map.invalidateSize(), 240)
   }
-  grip.addEventListener('pointerup', end)
-  grip.addEventListener('pointercancel', end)
+
+  for (const el of handles) {
+    el.addEventListener('pointerdown', down(el))
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerup', end)
+    el.addEventListener('pointercancel', end)
+  }
 }
 
 /* ══ 시작 ═══════════════════════════════════════════════ */

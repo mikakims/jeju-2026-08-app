@@ -7,7 +7,27 @@
 <!-- 링크를 아는 사람만 보라고 만든 페이지다. 숙소 주소·날짜가 data.js 에 들어 있어서
      검색엔진에 잡히면 곤란하다. -->
 <meta name="robots" content="noindex, nofollow">
-<title>제주 2026.08</title>
+
+<!-- 링크 미리보기(카톡 등)에 뜨는 이름. 메신저는 og:title 을 title 보다 우선하는 경우가 많아
+     둘 다 같은 값으로 맞춰 둔다. -->
+<title>Plan P - MVP</title>
+<meta property="og:title" content="Plan P - MVP">
+<meta property="og:description" content="내부 공유용 프로토타입">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plan P">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Plan P - MVP">
+<meta name="twitter:description" content="내부 공유용 프로토타입">
+
+<!-- 홈 화면에 추가하면 주소창·하단바 없이 전체화면으로 뜬다.
+     모바일 브라우저에서 위아래가 잘려 답답한 걸 근본적으로 없애는 방법. -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plan P">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -131,7 +151,8 @@
   </div>
   <div id="list-filter">
     <button class="f on" data-pick="all">전체</button>
-    <button class="f" data-pick="mine">⭐ Pick만 모아보기</button>
+    <button class="f" data-pick="mine">⭐ Pick</button>
+    <button class="f" data-pick="work">💻 일하기 좋은</button>
   </div>
   <div id="list"></div>
 </section>

@@ -58,8 +58,11 @@ body.t-fish  { --ac: var(--teal); --ac-soft: var(--teal-soft); --ac-ink: var(--t
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 
+/* 모바일 사파리·크롬은 주소창이 나왔다 들어갔다 하면서 100vh 를 갉아먹는다.
+   그대로 두면 위아래가 잘린다. dvh(동적 뷰포트 높이)를 쓰고, 못 쓰는 브라우저엔
+   앞줄이 폴백으로 남는다. */
 html, body {
-  margin: 0; height: 100%; overflow: hidden;
+  margin: 0; height: 100%; height: 100dvh; overflow: hidden;
   background: var(--bg); color: var(--fg);
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
         'Malgun Gothic', system-ui, sans-serif;
@@ -130,7 +133,7 @@ html, body {
 /* ── 모달 ─────────────────────────────────────────────── */
 #modal { position: fixed; inset: 0; z-index: 1200; background: rgba(38,40,44,.4);
   display: flex; align-items: flex-end; }
-.sheetbox { width: 100%; max-height: 92vh; overflow-y: auto;
+.sheetbox { width: 100%; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   background: var(--panel); border-radius: 18px 18px 0 0;
   padding: 18px 16px calc(16px + var(--safe-b));
   box-shadow: 0 -8px 30px rgba(0,0,0,.14); }
@@ -197,13 +200,19 @@ html, body {
   box-shadow: 0 -6px 22px rgba(0,0,0,.10);
 }
 #sheet.lo  { height: 96px; }
-#sheet.mid { height: 46vh; }
-#sheet.hi  { height: calc(100% - var(--tabs-h) - 8px); }
+#sheet.mid { height: 46vh; height: 46dvh; }
+#sheet.hi  { height: calc(100dvh - var(--tabs-h) - 8px); }
 
-#grip { padding: 8px 0 4px; display: flex; justify-content: center; flex: 0 0 auto; cursor: grab; }
-#grip span { width: 40px; height: 4px; border-radius: 2px; background: var(--line); }
+/* 손잡이와 그 아래 머리글까지가 드래그 영역이다.
+ * touch-action:none 이 없으면 모바일 브라우저가 그 터치를 스크롤로 가로채
+ * pointercancel 을 쏴 버려서, 데스크톱 마우스로만 끌리고 폰에선 탭만 되는 상태가 된다. */
+#grip, #sheet-head { touch-action: none; }
+#grip { padding: 11px 0 7px; display: flex; justify-content: center; flex: 0 0 auto; cursor: grab; }
+#grip span { width: 44px; height: 5px; border-radius: 3px; background: #cfcdc6; transition: background .15s, width .15s; }
+#sheet.dragging #grip span { background: var(--ac); width: 56px; }
+#sheet.dragging { transition: none; }
 
-#sheet-head { display: flex; align-items: baseline; gap: 8px; padding: 0 14px 8px; flex: 0 0 auto; }
+#sheet-head { display: flex; align-items: baseline; gap: 8px; padding: 0 14px 8px; flex: 0 0 auto; cursor: grab; }
 #sheet-head b { font-size: 15px; }
 .muted { color: var(--dim); font-size: 12px; }
 
@@ -239,6 +248,7 @@ html, body {
 .pill.shut { border-color: #f0d3d1; background: #fbeeed; color: #a8564f; }   /* 파스텔 로즈 */
 .pill.brk  { border-color: #f5ddbe; background: #fdf3e6; color: #a3702a; }   /* 파스텔 살구 */
 .pill.kind { border-color: #cfe3f0; background: #ecf4fa; color: #34718f; }   /* 파스텔 하늘 */
+.pill.work { border-color: #d9d5ea; background: #f0eef8; color: #5f5a86; }   /* 파스텔 보라 — 일하기 좋은 */
 
 /* ── 상세 ─────────────────────────────────────────────── */
 #detail {

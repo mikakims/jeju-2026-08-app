@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<!-- 링크를 아는 사람만 보라고 만든 페이지다. 숙소 주소·날짜가 data.js 에 들어 있어서
+     검색엔진에 잡히면 곤란하다. -->
+<meta name="robots" content="noindex, nofollow">
+<title>제주 2026.08</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- ── 상단: 모드 · 조건 · 필터 ─────────────────────────── -->
+<header id="bar">
+  <!-- 1단: 언제/어디 기준으로 볼지 -->
+  <div class="row modes">
+    <button id="mode-now" class="mode on">지금을 즐기기</button>
+    <button id="mode-plan" class="mode">먼저 알아보기</button>
+  </div>
+
+  <!-- 2단: 조건. "지금을 즐기기" 에서도 위치는 바꿀 수 있어야 한다 -->
+  <div id="plan">
+    <div class="row">
+      <button class="cond" id="cond-date"><i>날짜</i><b>—</b></button>
+      <button class="cond" id="cond-time"><i>시간</i><b>—</b></button>
+      <button class="cond" id="cond-place"><i>위치</i><b>—</b></button>
+    </div>
+  </div>
+
+  <!-- 3단: 반경 -->
+  <div class="row">
+    <label class="rad">
+      반경 <b id="lb-radius">3.0</b>km
+      <input type="range" id="in-radius" min="0.5" max="20" step="0.5" value="3">
+    </label>
+  </div>
+
+  <!-- 4단: 검색(물놀이) / 카테고리 -->
+  <div class="row" id="row-search" hidden>
+    <input type="search" id="in-search" class="chip grow" placeholder="해수욕장·포구 이름이나 지역 검색">
+  </div>
+  <div class="row" id="row-filter">
+    <button class="f on" data-cat="all">전체</button>
+    <button class="f" data-cat="restaurant">식당</button>
+    <button class="f" data-cat="cafe">카페</button>
+    <button class="f" data-cat="bakery">베이커리</button>
+    <button class="f" data-cat="etc">기타</button>
+  </div>
+  <div class="row" id="row-shop" hidden>
+    <button class="f on" data-shop="all">전체</button>
+    <button class="f" data-shop="소품샵">소품샵</button>
+    <button class="f" data-shop="기념품샵">기념품샵</button>
+  </div>
+  <div class="row" id="row-craft" hidden>
+    <button class="f on" data-craft="all">전체</button>
+    <button class="f" data-craft="공방">공방·만들기</button>
+    <button class="f" data-craft="물">물에서</button>
+    <button class="f" data-craft="뭍">뭍에서</button>
+  </div>
+  <div class="row" id="row-kind" hidden>
+    <button class="f on" data-kind="all">전체</button>
+    <button class="f" data-kind="해수욕장">해수욕장</button>
+    <button class="f" data-kind="해변">해변</button>
+    <button class="f" data-kind="포구">포구</button>
+  </div>
+  <!-- 낚시: 장소 유형 + 어종. 어종 칩은 app.js 가 데이터에서 만든다 -->
+  <div class="row" id="row-fish-spot" hidden>
+    <button class="f on" data-spot="all">전체</button>
+    <button class="f" data-spot="방파제">방파제</button>
+    <button class="f" data-spot="갯바위">갯바위</button>
+    <button class="f" data-spot="낚시점">낚시점</button>
+    <!-- 규정은 필터가 아니지만 이 줄에 둔다. 어종 줄에 두면 칩에 밀려 화면 밖으로 나간다 -->
+    <button class="f rules" id="btn-rules" type="button">📋 규정</button>
+  </div>
+  <div class="row" id="row-fish-species" hidden>
+    <button class="f on" data-fish="all">어종 전체</button>
+  </div>
+</header>
+
+<!-- ── 날짜·시간 고르기 ────────────────────────────────── -->
+<div id="modal" hidden>
+  <div class="sheetbox">
+    <!-- step 1: 달력 + 시간 -->
+    <section id="step-when">
+      <h3>언제 가볼까요</h3>
+      <div class="cal-head">
+        <button id="cal-prev" aria-label="이전 달">‹</button>
+        <b id="cal-title">—</b>
+        <button id="cal-next" aria-label="다음 달">›</button>
+      </div>
+      <div class="cal-wd"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div id="cal-grid"></div>
+      <h4>시간대</h4>
+      <div id="hours"></div>
+      <div class="modal-btns">
+        <button class="btn ghost" data-close>취소</button>
+        <button class="btn primary" id="ok-when">선택한 날짜와 시간으로 확인</button>
+      </div>
+    </section>
+
+    <!-- step 2: 위치 -->
+    <section id="step-where" hidden>
+      <h3>어디를 기준으로 볼까요</h3>
+      <p class="modal-sub" id="where-sub">—</p>
+      <div id="where-list"></div>
+      <div class="modal-btns">
+        <button class="btn ghost" id="back-when">← 날짜·시간</button>
+        <button class="btn primary" id="ok-where">이 위치로 보기</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- 지도에서 직접 찍는 중일 때 뜨는 확인 바 -->
+<div id="pickbar" hidden>
+  <span>지도를 눌러 기준점을 찍으세요</span>
+  <button class="btn ghost" id="pick-cancel">취소</button>
+</div>
+
+<!-- ── 목록 시트 ───────────────────────────────────────── -->
+<section id="sheet" class="mid">
+  <div id="grip"><span></span></div>
+  <div id="sheet-head">
+    <b id="count">—</b>
+    <span id="origin-label" class="muted"></span>
+  </div>
+  <div id="list-filter">
+    <button class="f on" data-pick="all">전체</button>
+    <button class="f" data-pick="mine">⭐ Pick만 모아보기</button>
+  </div>
+  <div id="list"></div>
+</section>
+
+<!-- ── 상세 ────────────────────────────────────────────── -->
+<section id="detail" hidden>
+  <button id="btn-back">← 목록</button>
+  <div id="detail-body"></div>
+</section>
+
+<!-- ── 하단 탭 ─────────────────────────────────────────── -->
+<nav id="tabs">
+  <button class="tab on" data-tab="eat"><i>🍽</i>맛집</button>
+  <button class="tab" data-tab="shop"><i>🎁</i>소품샵</button>
+  <button class="tab" data-tab="craft"><i>🧑‍🎨</i>체험</button>
+  <button class="tab" data-tab="water"><i>🌊</i>물놀이</button>
+  <button class="tab" data-tab="fish"><i>🎣</i>낚시</button>
+</nav>
+
+<script src="vendor/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

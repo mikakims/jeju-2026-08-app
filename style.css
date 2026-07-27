@@ -1,0 +1,384 @@
+/* ============================================================
+ * 제주 2026.08 — 모바일 웹
+ *
+ * 지도 위에 상단 컨트롤 바 + 아래에서 올라오는 목록 시트.
+ * 기준은 세로 폰 화면이다.
+ *
+ * 색
+ *   바탕  거의 흰 연회색, 글자  현무암 같은 진회색
+ *   강조  탭에 따라 바뀐다 — 맛집·상점은 귤색, 물놀이는 바다 파랑
+ *   초록  서브. "지금 영업중", "놀기 좋은 시간" 같은 긍정 상태에만
+ * ============================================================ */
+
+:root {
+  --bg: #f4f4f1;        /* 거의 흰색에 가까운 연회색 */
+  --panel: #ffffff;
+  --panel-2: #ecebe7;
+  --line: #dedcd6;
+  --fg: #26282c;        /* 현무암 — 검정에 가까운 진한 회색 */
+  --dim: #7b7f86;
+
+  --tan: #ef7c12;       /* 귤색 */
+  --tan-soft: #fdeedd;
+  --tan-ink: #a3540a;
+  --sea: #0f7ba8;       /* 바다 파랑 */
+  --sea-soft: #e4f1f8;
+  --sea-ink: #0b5f81;
+  --grn: #2c9159;       /* 초록 — 서브 */
+  --grn-soft: #e3f3ea;
+  --grn-ink: #1f6f43;
+  --plum: #8a5fa8;      /* 자주 — 소품샵 */
+  --plum-soft: #f3edf8;
+  --plum-ink: #6a4384;
+  --teal: #0e6b63;      /* 딥틸 — 낚시. 물놀이 파랑과 붙어 보이지 않게 초록 쪽으로 뺐다 */
+  --teal-soft: #e2f0ee;
+  --teal-ink: #0a534d;
+  --red: #c8443c;
+  --red-soft: #fbe9e8;
+  --red-ink: #9b2f29;
+
+  /* 탭이 바뀌면 이 셋만 갈아끼운다 */
+  --ac: var(--tan);
+  --ac-soft: var(--tan-soft);
+  --ac-ink: var(--tan-ink);
+
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --tabs-h: 56px;
+}
+
+body.t-eat   { --ac: var(--tan); --ac-soft: var(--tan-soft); --ac-ink: var(--tan-ink); }
+body.t-water { --ac: var(--sea); --ac-soft: var(--sea-soft); --ac-ink: var(--sea-ink); }
+body.t-craft { --ac: var(--grn); --ac-soft: var(--grn-soft); --ac-ink: var(--grn-ink); }
+/* 소품·기념품은 네 번째 탭이라 팔레트 밖의 색이 하나 필요했다.
+   기존 소품샵 핀 색과 같은 계열을 차분하게 낮춘 자주. */
+body.t-shop  { --ac: var(--plum); --ac-soft: var(--plum-soft); --ac-ink: var(--plum-ink); }
+body.t-fish  { --ac: var(--teal); --ac-soft: var(--teal-soft); --ac-ink: var(--teal-ink); }
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
+        'Malgun Gothic', system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+#map { position: fixed; inset: 0; bottom: var(--tabs-h); z-index: 0; background: #e8e6e1; }
+.leaflet-container { background: #e8e6e1; font: inherit; }
+.leaflet-control-attribution { background: rgba(255,255,255,.75) !important; color: #7b7f86 !important; font-size: 9px; }
+.leaflet-control-attribution a { color: #7b7f86 !important; }
+.leaflet-bar a { color: var(--fg) !important; }
+
+/* ── 상단 컨트롤 ──────────────────────────────────────── */
+#bar {
+  position: fixed; z-index: 500; left: 0; right: 0; top: 0;
+  padding: calc(var(--safe-t) + 8px) 10px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: linear-gradient(180deg, rgba(244,244,241,.97) 72%, rgba(244,244,241,0));
+  pointer-events: none;
+}
+#bar .row { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; pointer-events: auto; scrollbar-width: none; }
+#bar .row::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: 0 0 auto;
+  background: var(--panel); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 7px 12px; font-size: 13px; font-family: inherit;
+  appearance: none; min-height: 34px;
+}
+.chip.grow { flex: 1 1 auto; width: 100%; border-radius: 10px; }
+.chip:active { background: var(--panel-2); }
+
+.rad { flex: 1 1 auto; display: flex; align-items: center; gap: 8px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 14px; font-size: 12px; color: var(--dim); pointer-events: auto; }
+.rad b { color: var(--fg); font-size: 14px; }
+.rad input { flex: 1; accent-color: var(--ac); }
+
+.f {
+  flex: 0 0 auto; background: var(--panel); color: var(--dim);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 11px; font-size: 12px; font-family: inherit;
+}
+.f.on { background: var(--ac); border-color: var(--ac); color: #fff; font-weight: 600; }
+
+/* ── 모드 전환 (지금 / 먼저) ──────────────────────────── */
+.modes { gap: 0 !important; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px; overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.mode { flex: 1 1 0; min-width: 0; background: none; border: 0; border-radius: 999px;
+  color: var(--dim); font-family: inherit; font-size: 13.5px; font-weight: 600;
+  padding: 9px 8px; white-space: nowrap; }
+.mode.on { background: var(--ac); color: #fff; }
+
+/* ── 조건 버튼 (날짜 / 시간 / 위치) ───────────────────── */
+.cond { flex: 1 1 0; min-width: 0; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 7px 10px; font-family: inherit; color: var(--fg); }
+.cond i { display: block; font-style: normal; font-size: 10px; color: var(--dim); margin-bottom: 1px; }
+.cond b { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.cond.unset b { color: var(--ac); }
+/* "지금을 즐기기" 에서는 날짜·시간이 자동이라 흐리게 — 위치만 또렷하게 둔다 */
+.cond.locked { background: var(--panel-2); }
+.cond.locked b { color: var(--dim); font-weight: 400; }
+
+/* ── 모달 ─────────────────────────────────────────────── */
+#modal { position: fixed; inset: 0; z-index: 1200; background: rgba(38,40,44,.4);
+  display: flex; align-items: flex-end; }
+.sheetbox { width: 100%; max-height: 92vh; overflow-y: auto;
+  background: var(--panel); border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(16px + var(--safe-b));
+  box-shadow: 0 -8px 30px rgba(0,0,0,.14); }
+.sheetbox h3 { margin: 0 0 4px; font-size: 17px; }
+.sheetbox h4 { margin: 18px 0 8px; font-size: 12px; color: var(--dim); font-weight: 600; }
+.modal-sub { margin: 0 0 14px; font-size: 12.5px; color: var(--dim); }
+
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 10px; }
+.cal-head b { font-size: 15px; }
+.cal-head button { width: 40px; height: 36px; background: var(--panel-2); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 9px; font-size: 18px; line-height: 1; }
+.cal-wd, #cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-wd { margin-bottom: 4px; }
+.cal-wd span { text-align: center; font-size: 11px; color: var(--dim); padding: 2px 0; }
+.cal-wd span:first-child { color: var(--red); }
+.cal-wd span:last-child { color: var(--sea); }
+#cal-grid button { aspect-ratio: 1; background: none; border: 1px solid transparent;
+  border-radius: 10px; color: var(--fg); font-family: inherit; font-size: 14px; }
+/* 여행 기간 — 물때가 들어있는 날들 */
+#cal-grid button.trip { background: #ecf7f1; border-color: #c6e6d5; color: #2f7d55; }
+#cal-grid button.today { border-color: var(--ac); color: var(--ac-ink); font-weight: 700; }
+#cal-grid button.on { background: var(--ac); border-color: var(--ac); color: #fff; font-weight: 700; }
+
+#hours { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+#hours button { padding: 9px 0; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--dim); font-family: inherit; font-size: 12.5px; }
+#hours button.on { background: var(--ac); border-color: var(--ac); color: #fff; font-weight: 600; }
+
+#where-list { display: flex; flex-direction: column; gap: 8px; }
+.where {
+  display: flex; align-items: center; gap: 11px; text-align: left; width: 100%;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 13px; color: var(--fg); font-family: inherit;
+}
+.where.on { border-color: var(--ac); background: var(--ac-soft); }
+.where .ic { font-size: 20px; flex: 0 0 auto; }
+.where .tx { flex: 1; min-width: 0; }
+.where .tx b { display: block; font-size: 14px; font-weight: 600; }
+.where .tx small { display: block; color: var(--dim); font-size: 11.5px; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.modal-btns { display: flex; gap: 8px; margin-top: 20px; }
+.btn { flex: 1; padding: 14px 10px; border-radius: 11px; font-family: inherit;
+  font-size: 14px; font-weight: 600; border: 1px solid var(--line); }
+.btn.ghost { background: var(--panel-2); color: var(--dim); flex: 0 0 34%; }
+.btn.primary { background: var(--ac); border-color: var(--ac); color: #fff; }
+.btn:disabled { opacity: .45; }
+
+#pickbar { position: fixed; z-index: 1100; left: 12px; right: 12px;
+  bottom: calc(var(--tabs-h) + var(--safe-b) + 14px);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--ac); border-radius: 12px;
+  padding: 12px 14px; font-size: 13px; box-shadow: 0 6px 22px rgba(0,0,0,.16); }
+#pickbar span { flex: 1; }
+#pickbar .btn { flex: 0 0 auto; padding: 9px 14px; }
+
+/* ── 목록 시트 ────────────────────────────────────────── */
+#sheet {
+  position: fixed; z-index: 600; left: 0; right: 0; bottom: var(--tabs-h);
+  background: var(--panel); border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  display: flex; flex-direction: column;
+  transition: height .22s ease;
+  box-shadow: 0 -6px 22px rgba(0,0,0,.10);
+}
+#sheet.lo  { height: 96px; }
+#sheet.mid { height: 46vh; }
+#sheet.hi  { height: calc(100% - var(--tabs-h) - 8px); }
+
+#grip { padding: 8px 0 4px; display: flex; justify-content: center; flex: 0 0 auto; cursor: grab; }
+#grip span { width: 40px; height: 4px; border-radius: 2px; background: var(--line); }
+
+#sheet-head { display: flex; align-items: baseline; gap: 8px; padding: 0 14px 8px; flex: 0 0 auto; }
+#sheet-head b { font-size: 15px; }
+.muted { color: var(--dim); font-size: 12px; }
+
+#list-filter { display: flex; gap: 6px; padding: 0 14px 8px; flex: 0 0 auto; }
+
+#list { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 10px calc(14px + var(--safe-b)); }
+
+/* ── 카드 ─────────────────────────────────────────────── */
+.card {
+  display: grid; grid-template-columns: 76px 1fr; gap: 10px;
+  padding: 10px; margin-bottom: 8px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+}
+.card:active { border-color: var(--ac); background: var(--ac-soft); }
+.thumb {
+  width: 76px; height: 76px; border-radius: 9px; object-fit: cover;
+  background: var(--panel-2); display: block;
+}
+.thumb.ph { display: grid; place-items: center; font-size: 26px; color: #b9b7b0; }
+.card h3 { margin: 0 0 3px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dist { color: var(--ac-ink); font-size: 12px; font-weight: 700; flex: 0 0 auto; }
+.card .meta { color: var(--dim); font-size: 12px; margin: 0 0 4px; }
+.card .blurb { font-size: 12.5px; color: #4d5158; margin: 0 0 5px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .hours { font-size: 12px; color: var(--dim); }
+
+/* 태그는 전부 파스텔로. 배경에 묻히되 글자는 읽히는 선까지만 진하게. */
+.pill { font-size: 10.5px; padding: 3px 8px; border-radius: 999px; font-weight: 600;
+  border: 1px solid #e6e4de; color: #6f747b; background: #f2f1ed; flex: 0 0 auto; }
+.pill.mine { border-color: #ffd9b0; background: #fff1e2; color: #b06514; }   /* 파스텔 귤 */
+.pill.rec  { border-color: #cfe3f0; background: #ecf4fa; color: #34718f; } /* 파스텔 하늘 */
+.pill.open { border-color: #c6e6d5; background: #ecf7f1; color: #2f7d55; }   /* 파스텔 민트 */
+.pill.shut { border-color: #f0d3d1; background: #fbeeed; color: #a8564f; }   /* 파스텔 로즈 */
+.pill.brk  { border-color: #f5ddbe; background: #fdf3e6; color: #a3702a; }   /* 파스텔 살구 */
+.pill.kind { border-color: #cfe3f0; background: #ecf4fa; color: #34718f; }   /* 파스텔 하늘 */
+
+/* ── 상세 ─────────────────────────────────────────────── */
+#detail {
+  position: fixed; z-index: 900; inset: 0; bottom: 0;
+  background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(28px + var(--safe-b));
+}
+#btn-back {
+  position: sticky; top: 0; z-index: 2; width: 100%; text-align: left;
+  padding: calc(var(--safe-t) + 12px) 16px 12px; font-size: 14px; font-family: inherit;
+  background: rgba(244,244,241,.95); color: var(--ac-ink); font-weight: 600;
+  border: 0; border-bottom: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+#detail-body { padding: 14px 16px; }
+#detail h2 { margin: 0 0 4px; font-size: 21px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#detail .sub { color: var(--dim); font-size: 13px; margin-bottom: 12px; }
+
+.gal { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 14px; padding: 0 16px; scrollbar-width: none; }
+.gal::-webkit-scrollbar { display: none; }
+.gal img { height: 150px; border-radius: 10px; flex: 0 0 auto; object-fit: cover; background: var(--panel-2); }
+
+.sec { margin: 0 0 16px; }
+.sec h4 { margin: 0 0 7px; font-size: 12px; color: var(--dim); font-weight: 700; letter-spacing: .04em; }
+.sec p { margin: 0 0 7px; font-size: 14px; }
+
+.kv { display: grid; grid-template-columns: 74px 1fr; gap: 5px 10px; font-size: 13.5px; }
+.kv dt { color: var(--dim); }
+.kv dd { margin: 0; }
+
+.menu { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.menu:last-child { border-bottom: 0; }
+.menu .nm b { font-weight: 600; }
+.menu .nm small { display: block; color: var(--dim); font-size: 11.5px; margin-top: 2px; }
+.menu .pr { flex: 0 0 auto; color: #4d5158; }
+.menu .rec { color: var(--tan); font-size: 10px; margin-left: 4px; font-weight: 700; }
+
+.links { display: flex; gap: 8px; flex-wrap: wrap; }
+.links a {
+  padding: 9px 14px; border-radius: 10px; font-size: 13px; text-decoration: none; font-weight: 600;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--line);
+}
+.links a.nv { border-color: #c6e6d5; background: #ecf7f1; color: #2f7d55; }
+.links a.kk { border-color: #f5ddbe; background: #fdf3e6; color: #a3702a; }
+.links a.ig { border-color: #edd2e2; background: #fbf0f6; color: #93507a; }
+
+.tagrow { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* ── 물때 ─────────────────────────────────────────────── */
+.tide { background: #eef6fb; border: 1px solid #d7e8f2; border-radius: 10px;
+  padding: 10px 12px; font-size: 12.5px; }
+.tide .best { color: #2f7d55; font-weight: 700; } /* 초록은 "지금 좋다" 신호로만 */
+.tide .now { color: #5c6167; margin-top: 4px; }
+.card .tide { margin-top: 5px; padding: 7px 9px; font-size: 11.5px; }
+
+/* ── 하단 탭 ──────────────────────────────────────────── */
+#tabs {
+  position: fixed; z-index: 700; left: 0; right: 0; bottom: 0;
+  height: calc(var(--tabs-h) + var(--safe-b)); padding-bottom: var(--safe-b);
+  display: flex; background: var(--panel); border-top: 1px solid var(--line);
+}
+.tab {
+  flex: 1; background: none; border: 0; color: var(--dim); font-family: inherit; font-size: 10.5px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.tab i { font-style: normal; font-size: 18px; }
+.tab[data-tab="eat"].on { color: var(--tan); font-weight: 700; }
+.tab[data-tab="water"].on { color: var(--sea); font-weight: 700; }
+.tab[data-tab="craft"].on { color: var(--grn); font-weight: 700; }
+.tab[data-tab="shop"].on { color: var(--plum); font-weight: 700; }
+.tab[data-tab="fish"].on { color: var(--teal); font-weight: 700; }
+
+/* ── 지도 마커 ────────────────────────────────────────── */
+.pin { border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.pin.restaurant { background: #e0552c; }
+.pin.cafe       { background: var(--tan); }
+.pin.bakery     { background: #c98a2e; }
+.pin.shop       { background: var(--plum); }
+.pin.takeout, .pin.market { background: var(--grn); }
+.pin.activity, .pin.attraction, .pin.craft { background: var(--grn); }
+.pin.해수욕장    { background: var(--sea); }
+.pin.해변        { background: #2aa6bd; }
+.pin.포구        { background: var(--grn); }
+.pin.fish-방파제 { background: var(--teal); }
+.pin.fish-갯바위 { background: #4a7f57; }
+.pin.fish-낚시점 { background: #9a8248; }
+.pin.fish-bad    { background: var(--red); }   /* 과태료·통제구역 */
+.pin.sel { transform: scale(1.9); z-index: 999 !important; }
+
+/* ── 낚시 ─────────────────────────────────────────────────
+ * 물때 박스는 탭 색을 따라간다 — 파란 물놀이 박스와 헷갈리면 안 된다. */
+body.t-fish .tide { background: var(--teal-soft); border-color: #cbe0dc; }
+
+.pill.lv    { border-color: #d9d5ea; background: #f0eef8; color: #5f5a86; }  /* 난이도 */
+.pill.night { border-color: #ccd2e0; background: #eef1f7; color: #4e5a75; }  /* 밤 가능 */
+.pill.swim  { border-color: #cfe3f0; background: #ecf4fa; color: #34718f; }  /* 물놀이터와 겹침 */
+.pill.warnpill { border-color: #f5ddbe; background: #fdf3e6; color: #a3702a; }
+
+/* 경고. danger 는 과태료·통제구역이라 눈에 띄어야 한다 */
+.warn {
+  margin-top: 5px; padding: 6px 9px; border-radius: 8px; font-size: 11.5px; line-height: 1.45;
+  background: #fdf3e6; border: 1px solid #f0dcbc; color: #7d5a1e;
+}
+.warn.bad { background: var(--red-soft); border-color: #f0d3d1; color: var(--red-ink); font-weight: 600; }
+#detail .warn { font-size: 13px; padding: 9px 11px; }
+
+/* 어종별 입질 블록 (상세) */
+.bite { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.bite:last-child { border-bottom: 0; }
+.bite-h { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.bite-t { margin-left: auto; color: var(--ac-ink); font-weight: 700; font-size: 12.5px; }
+.bite .muted { display: block; margin-top: 2px; }
+.tipline { margin-top: 4px; font-size: 12.5px; color: #4d5158; }
+
+/* 규정 버튼은 필터가 아니라 문서로 가는 문이라 테두리만 준다 */
+.f.rules { border-color: var(--ac); color: var(--ac-ink); font-weight: 600; margin-left: auto; }
+.origin-dot { background: #fff; border: 3px solid var(--ac); border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+
+/* 줌 단계별 핀 크기 — 섬 전체 보기에선 작게, 확대하면 눌리기 쉽게 */
+.z-far .pin  { transform: scale(.72); }
+.z-near .pin { transform: scale(1.55); border-width: 2.5px; }
+.z-near .pin.sel { transform: scale(2.2); }
+
+.empty { text-align: center; color: var(--dim); font-size: 13px; padding: 28px 20px; }
+
+/* ── 토스트 ───────────────────────────────────────────── */
+#toast {
+  position: fixed; z-index: 1000; left: 12px; right: 12px;
+  bottom: calc(var(--tabs-h) + var(--safe-b) + 14px);
+  background: var(--fg); color: #fff; border-radius: 10px;
+  padding: 11px 14px; font-size: 13px; text-align: center;
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity .18s, transform .18s;
+}
+#toast.on { opacity: 1; transform: none; }
+
+/* 카드 본문의 가격 줄 — 설명 대신 이게 들어간다 */
+.card .prices { margin: 0 0 5px; display: flex; flex-direction: column; gap: 2px; }
+.card .price { font-size: 13px; font-weight: 700; color: var(--ac-ink); }
+.card .sig { font-size: 12px; color: #5c6167;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .sig b { font-weight: 600; color: var(--fg); }

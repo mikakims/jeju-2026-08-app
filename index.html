@@ -29,7 +29,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Plan P">
 <link rel="stylesheet" href="vendor/leaflet.css">
-<link rel="stylesheet" href="style.css?v=f536e122">
+<link rel="stylesheet" href="style.css?v=f744d416">
 </head>
 <body>
 
@@ -37,27 +37,38 @@
 
 <!-- ── 상단: 모드 · 조건 · 필터 ─────────────────────────── -->
 <header id="bar">
-  <!-- 1단: 언제/어디 기준으로 볼지 -->
-  <div class="row modes">
-    <button id="mode-now" class="mode on">지금을 즐기기</button>
-    <button id="mode-plan" class="mode">먼저 알아보기</button>
+  <!-- 1단: 기준 한 줄 요약. 누르면 아래가 펼쳐진다.
+       모드·날짜·시간·위치·반경이 늘 펼쳐져 있으면 화면의 28%를 먹어서 지도가 죽는다 -->
+  <div class="row" id="row-summary">
+    <button class="summary" id="btn-summary" aria-expanded="false">
+      <b id="sum-text">—</b><span class="chev">▾</span>
+    </button>
+    <button class="iconbtn" id="btn-locate" title="현재 위치">📍</button>
   </div>
 
-  <!-- 2단: 조건. "지금을 즐기기" 에서도 위치는 바꿀 수 있어야 한다 -->
-  <div id="plan">
-    <div class="row">
-      <button class="cond" id="cond-date"><i>날짜</i><b>—</b></button>
-      <button class="cond" id="cond-time"><i>시간</i><b>—</b></button>
-      <button class="cond" id="cond-place"><i>위치</i><b>—</b></button>
+  <div id="cond-box" hidden>
+    <!-- 언제/어디 기준으로 볼지 -->
+    <div class="row modes">
+      <button id="mode-now" class="mode on">지금을 즐기기</button>
+      <button id="mode-plan" class="mode">먼저 알아보기</button>
     </div>
-  </div>
 
-  <!-- 3단: 반경 -->
-  <div class="row">
-    <label class="rad">
-      반경 <b id="lb-radius">3.0</b>km
-      <input type="range" id="in-radius" min="0.5" max="20" step="0.5" value="3">
-    </label>
+    <!-- 조건. "지금을 즐기기" 에서도 위치는 바꿀 수 있어야 한다 -->
+    <div id="plan">
+      <div class="row">
+        <button class="cond" id="cond-date"><i>날짜</i><b>—</b></button>
+        <button class="cond" id="cond-time"><i>시간</i><b>—</b></button>
+        <button class="cond" id="cond-place"><i>위치</i><b>—</b></button>
+      </div>
+    </div>
+
+    <!-- 반경 -->
+    <div class="row">
+      <label class="rad">
+        반경 <b id="lb-radius">3.0</b>km
+        <input type="range" id="in-radius" min="0.5" max="20" step="0.5" value="3">
+      </label>
+    </div>
   </div>
 
   <!-- 4단: 검색(물놀이) / 카테고리 -->
@@ -175,6 +186,6 @@
 
 <script src="vendor/leaflet.js"></script>
 <script src="data.js?v=7a93ade3"></script>
-<script src="app.js?v=f1a88e8d"></script>
+<script src="app.js?v=c6b17a7d"></script>
 </body>
 </html>

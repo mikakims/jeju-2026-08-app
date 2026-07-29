@@ -950,11 +950,66 @@ function toast(msg) {
   toast._t = setTimeout(() => el.classList.remove('on'), 3200)
 }
 
+/* 지도는 화면 전체 크기인데 상단바와 시트가 그 위를 덮는다.
+ * 그래서 지도가 아는 중심(요소의 한가운데)이 시트 경계에 걸려 있다 —
+ * setView 로 무언가를 "가운데" 놓으면 실제로는 화면 맨 아래 끄트머리에 찍히고,
+ * 확대할수록 그 어긋남이 커진다. 눈에 보이는 띠의 한가운데로 보정한다. */
+function viewInset() {
+  const barB = $('#bar').getBoundingClientRect().bottom
+  const sheetT = $('#sheet').getBoundingClientRect().top
+  const mapH = $('#map').getBoundingClientRect().height
+  return { top: Math.max(0, barB), bottom: Math.max(0, mapH - sheetT), mapH }
+}
+
+/** 보이는 띠의 한가운데에 오도록 지도를 옮긴다 */
+function focusMap(lat, lng, zoom) {
+  map.setView([lat, lng], zoom ?? map.getZoom())
+  const { top, bottom, mapH } = viewInset()
+  const band = mapH - top - bottom
+  // 시트를 끝까지 올리면 지도가 아예 안 보인다 — 그땐 보정할 기준이 없다
+  if (band < 120) return
+  const visMid = (top + (mapH - bottom)) / 2
+  const dy = mapH / 2 - visMid
+  if (Math.abs(dy) > 4) map.panBy([0, dy], { animate: false })
+}
+
+/** 여러 곳이 한눈에 들어오게 — 가려진 부분을 여백으로 알려준다 */
+function fitBoundsInset(bounds) {
+  const { top, bottom, mapH } = viewInset()
+  // 여백이 지도보다 커지면 Leaflet 이 엉뚱한 줌으로 튄다
+  const safe = mapH - top - bottom > 120
+  map.fitBounds(bounds, safe
+    ? { paddingTopLeft: [24, top + 12], paddingBottomRight: [24, bottom + 12] }
+    : { padding: [30, 30] })
+}
+
+function fitAll(points) {
+  if (points.length) fitBoundsInset(L.latLngBounds(points))
+}
+
+/* 기준점이 잡혀 있으면 지도는 "찾고 있는 반경" 을 보여줘야 한다.
+ * 제주 전도를 띄워두면 반경 3km 안 20곳이 점 하나로 뭉쳐 보인다.
+ *
+ * 시트가 접히는 중(0.22초)이나 첫 렌더 직후에 부르면 보이는 띠를 잘못 재서
+ * 엉뚱한 줌으로 앉는다. 다음 프레임까지 미뤄 레이아웃이 확정된 뒤에 맞춘다. */
+let fitPending = null
+function fitToSearch({ now = false } = {}) {
+  const run = () => {
+    fitPending = null
+    if (!state.origin) return fitAll(tabSource().map((p) => [p.lat, p.lng]))
+    // L.circle().getBounds() 는 지도에 붙은 뒤에만 된다. toBounds 는 한 변 길이를 받는다
+    fitBoundsInset(L.latLng(state.origin.lat, state.origin.lng).toBounds(state.radius * 2000))
+  }
+  if (now) return run()
+  clearTimeout(fitPending)
+  fitPending = setTimeout(run, 260) // 시트 전환(.22s) 이 끝난 뒤
+}
+
 function setOrigin(lat, lng, label) {
   state.origin = { lat, lng, label }
-  map.setView([lat, lng], Math.max(map.getZoom(), 12))
   syncCond()
   render()
+  fitToSearch() // 반경 원이 화면에 꽉 차게 — 그게 지금 찾고 있는 범위다
 }
 
 /* ── 모드: 지금을 즐기기 / 먼저 알아보기 ─────────────── */
@@ -973,28 +1028,52 @@ function useNow() {
   render()
 }
 
-function usePlan() {
+function usePlan({ silent = false } = {}) {
   state.mode = 'plan'
   $('#mode-plan').classList.add('on')
   $('#mode-now').classList.remove('on')
   $('#cond-date').classList.remove('locked')
   $('#cond-time').classList.remove('locked')
   syncCond()
-  // 아직 아무것도 안 고른 상태면 바로 고르게 띄운다
-  if (!state.planned) openWhen()
+  // 아직 아무것도 안 고른 상태면 바로 고르게 띄운다.
+  // 단 자동 전환(제주 밖)일 땐 모달이 튀어나오면 놀란다
+  if (!state.planned && !silent) openWhen()
 }
 
 $('#mode-now').onclick = useNow
 $('#mode-plan').onclick = usePlan
 
+// 제주 본섬 + 추자·우도까지 넉넉하게
+const inJeju = (lat, lng) => lat > 33.0 && lat < 34.05 && lng > 125.9 && lng < 127.05
+
+/** 여행 기간 중이면 그 날 숙소, 아니면 첫날 숙소 */
+function fallbackLodging() {
+  return lodgingFor(state.when) ?? DB.trip.lodging.find((l) => l.lat) ?? null
+}
+
 function locateMe({ quiet = false } = {}) {
   if (!navigator.geolocation) return quiet || toast('이 브라우저는 위치를 지원하지 않아요.')
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: '현재 위치', auto: true }
-      map.setView([state.origin.lat, state.origin.lng], Math.max(map.getZoom(), 12))
+      const { latitude: lat, longitude: lng } = pos.coords
+
+      /* 제주 밖에서 열면 반경 안에 아무것도 없다 — 여행 전에 계획 세우려고 여는
+       * 경우가 오히려 잦은데 빈 화면이 뜬다. 그럴 땐 숙소를 기준으로 삼고
+       * "먼저 알아보기" 로 넘긴다. 있지도 않은 곳에서 "지금을 즐기기" 는 말이 안 된다. */
+      if (!inJeju(lat, lng)) {
+        const stay = fallbackLodging()
+        if (stay) {
+          usePlan({ silent: true })
+          setOrigin(stay.lat, stay.lng, stay.name)
+          toast(`제주 밖이라 ${stay.date.slice(5)} 숙소(${stay.area ?? stay.name}) 기준으로 보여드려요`)
+          return
+        }
+      }
+
+      state.origin = { lat, lng, label: '현재 위치', auto: true }
       syncCond()
       render()
+      fitToSearch()
     },
     () => { if (!quiet) toast('위치를 못 가져왔어요. “위치”에서 숙소나 지도를 골라주세요.') },
     { enableHighAccuracy: true, timeout: 8000 },
@@ -1010,6 +1089,12 @@ function syncCond() {
   const pl = $('#cond-place')
   pl.querySelector('b').textContent = state.origin?.label ?? '정하기'
   pl.classList.toggle('unset', !state.origin)
+
+  // 접었을 때 한 줄로 보이는 요약 — 지금 무슨 기준으로 보고 있는지가 다 들어가야 한다
+  const where = state.origin?.label ?? '위치 정하기'
+  const when = state.mode === 'now' ? '지금' : `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}시`
+  $('#sum-text').textContent = `📍 ${where} · ${state.radius}km · ${when}`
+  $('#btn-summary').classList.toggle('unset', !state.origin)
 }
 
 /* ── 날짜·시간 모달 ──────────────────────────────────── */
@@ -1181,8 +1266,11 @@ map.on('click', (e) => {
 $('#in-radius').oninput = (e) => {
   state.radius = Number(e.target.value)
   $('#lb-radius').textContent = state.radius.toFixed(1)
+  syncCond() // 접힌 요약줄의 "3km" 도 따라가야 한다
   render()
 }
+// 끌고 있는 동안 지도가 계속 튀면 어지럽다 — 손을 뗄 때 한 번만 맞춘다
+$('#in-radius').onchange = () => fitToSearch()
 
 $$('#row-filter .f').forEach((b) => {
   b.onclick = () => {
@@ -1380,8 +1468,20 @@ $('#btn-back').onclick = () => { $('#detail').hidden = true }
   }
 }
 
+/* ── 기준 줄 접기·펼치기 ─────────────────────────────── */
+$('#btn-summary').onclick = () => {
+  const box = $('#cond-box')
+  box.hidden = !box.hidden
+  $('#btn-summary').setAttribute('aria-expanded', String(!box.hidden))
+  $('#btn-summary').classList.toggle('open', !box.hidden)
+  setTimeout(() => map.invalidateSize(), 60)
+}
+$('#btn-locate').onclick = () => locateMe()
+
 /* ══ 시작 ═══════════════════════════════════════════════ */
 document.body.classList.add('t-eat')
 syncPinScale()
 useNow() // 접속하면 "지금을 즐기기" 가 기본
-map.fitBounds(L.latLngBounds(DB.places.map((p) => [p.lat, p.lng])), { padding: [30, 30] })
+// 지도를 먼저 보여준다 — 시트가 절반을 먹으면 지도가 144px 짜리 띠가 된다
+$('#sheet').className = 'lo'
+fitToSearch()

@@ -462,6 +462,22 @@ function tabSource(tab = state.tab) {
   return DB.places
 }
 
+/* 검색 대상 글자.
+ * 지형지물(물놀이·낚시)은 이름·주소면 충분한데, 맛집은 그것만으론 안 된다.
+ * "흑돼지" 나 "빙수" 로 찾으려면 메뉴와 소개문까지 봐야 한다. */
+function searchText(p) {
+  const base = `${p.name} ${p.addr ?? ''} ${p.area ?? ''} ${p.sub ?? ''}`
+  if (p.type || p.kind) return base // 낚시 포인트·낚시점·물놀이 스팟
+  return `${base} ${p.blurb ?? ''} ${(p.tags ?? []).join(' ')} `
+    + (p.menus ?? []).map((m) => m.name ?? '').join(' ')
+}
+
+/** 공백으로 나눈 낱말이 전부 들어 있어야 한다 — "애월 카페" 처럼 좁혀 찾을 수 있게 */
+function matchQuery(p, q) {
+  const hay = searchText(p).toLowerCase()
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w))
+}
+
 function currentItems() {
   let items = tabSource().slice()
 
@@ -469,10 +485,6 @@ function currentItems() {
     if (state.spot !== 'all') items = items.filter((s) => s.type === state.spot)
     // 어종을 고르면 낚시점은 자연히 빠진다 — 어종이 없으니까
     if (state.fish !== 'all') items = items.filter((s) => (s.species ?? []).includes(state.fish))
-    if (state.q.trim()) {
-      const q = state.q.trim().toLowerCase()
-      items = items.filter((s) => `${s.name} ${s.addr ?? ''} ${s.area ?? ''}`.toLowerCase().includes(q))
-    }
   } else if (state.tab !== 'water') {
     // 범위밖(서귀포 등)은 반경 추천에서 뺀다 — DB엔 남아 있다
     items = items.filter((p) => !p.out_of_scope)
@@ -499,11 +511,10 @@ function currentItems() {
     }
   } else {
     if (state.kind !== 'all') items = items.filter((w) => w.kind === state.kind)
-    if (state.q.trim()) {
-      const q = state.q.trim().toLowerCase()
-      items = items.filter((w) => `${w.name} ${w.addr ?? ''} ${w.area ?? ''}`.toLowerCase().includes(q))
-    }
   }
+
+  // 검색은 모든 탭에서 똑같이 건다
+  if (state.q.trim()) items = items.filter((p) => matchQuery(p, state.q.trim()))
 
   if (state.origin) {
     items = items
@@ -672,9 +683,11 @@ function render() {
   const card = state.tab === 'water' ? cardWater : state.tab === 'fish' ? cardFish : cardEat
   list.innerHTML = items.length
     ? items.map(card).join('')
-    : `<p class="empty">${state.list !== 'all' && state.origin
-        ? `반경 ${state.radius}km 안에 ${state.list === 'mine' ? 'Pick 한' : '일하기 좋은'} 곳이 없어요. 반경을 넓혀보세요.`
-        : state.origin ? `반경 ${state.radius}km 안에 없어요. 반경을 넓혀보세요.` : '조건에 맞는 곳이 없어요.'}</p>`
+    : `<p class="empty">${state.q.trim()
+        ? `‘${esc(state.q.trim())}’ 로 찾은 곳이 없어요.${state.origin ? ` 반경 ${state.radius}km 밖일 수도 있어요.` : ''}`
+        : state.list !== 'all' && state.origin
+          ? `반경 ${state.radius}km 안에 ${state.list === 'mine' ? 'Pick 한' : '일하기 좋은'} 곳이 없어요. 반경을 넓혀보세요.`
+          : state.origin ? `반경 ${state.radius}km 안에 없어요. 반경을 넓혀보세요.` : '조건에 맞는 곳이 없어요.'}</p>`
 
   drawMarkers(items.length ? items : tabSource())
   drawOrigin()
@@ -1271,10 +1284,18 @@ $$('.tab').forEach((t) => {
     $('#row-fish-spot').hidden = tab !== 'fish'
     $('#row-fish-species').hidden = tab !== 'fish'
     // 검색은 지형지물을 찾는 두 탭에서만
-    $('#row-search').hidden = tab !== 'water' && tab !== 'fish'
-    $('#in-search').placeholder = tab === 'fish'
-      ? '방파제·갯바위·낚시점 이름이나 지역 검색'
-      : '해수욕장·포구 이름이나 지역 검색'
+    // 탭을 옮기면 검색어는 지운다. "빙수" 를 남긴 채 물놀이로 가면 0곳이 뜬다
+    state.q = ''
+    $('#in-search').value = ''
+    // 검색은 모든 탭에 둔다. 맛집만 140곳이라 필터만으론 못 찾는다
+    $('#row-search').hidden = false
+    $('#in-search').placeholder = {
+      eat: '이름 · 지역 · 메뉴로 검색 (흑돼지, 빙수, 애월…)',
+      shop: '소품샵 이름이나 지역 검색',
+      craft: '체험 이름이나 지역 검색',
+      water: '해수욕장·포구 이름이나 지역 검색',
+      fish: '방파제·갯바위·낚시점 이름이나 지역 검색',
+    }[tab] ?? '이름이나 지역 검색'
     $('#list-filter').hidden = tab === 'water' || tab === 'fish' // Pick 개념이 없다
     $('#detail').hidden = true
     render()

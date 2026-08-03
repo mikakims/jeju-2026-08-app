@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 430" width="320" height="430" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+  <defs>
+    <linearGradient id="sea4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a90b8"/><stop offset="55%" stop-color="#17457a"/><stop offset="100%" stop-color="#05162a"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="64" fill="#cfe2f0"/>
+  <rect y="64" width="320" height="366" fill="url(#sea4)"/>
+  <path d="M0,64 q20,-7 40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none"/>
+
+  <path d="M6,12 L76,40" stroke="#2b2b2b" stroke-width="5.5" stroke-linecap="round"/>
+  <text x="10" y="30" font-size="10" fill="#3a556b" font-weight="bold">원투대 (추부하 15호↑)</text>
+  <text x="10" y="52" font-size="9.5" fill="#1d4e89">원줄 나일론 5호 · 4000릴</text>
+  <path d="M76,40 L118,92" stroke="#eef3f7" stroke-width="1.8"/>
+  <path d="M118,92 L118,244" stroke="#eef3f7" stroke-width="1.8"/>
+
+  <!-- 대형 원투찌 -->
+  <ellipse cx="118" cy="104" rx="26" ry="22" fill="#e63946" stroke="#fff" stroke-width="2"/>
+  <rect x="112" y="72" width="12" height="24" rx="5" fill="#ffb703" stroke="#fff" stroke-width="1.2"/>
+  <text x="152" y="96" font-size="10.5" fill="#fff" font-weight="bold">대형 원투찌 8~12호</text>
+  <text x="152" y="109" font-size="9.5" fill="#dbe9f5">밤엔 전지찌로 교체</text>
+
+  <!-- 찌매듭 (수심) -->
+  <path d="M112,150 L124,150" stroke="#ffb703" stroke-width="3" stroke-linecap="round"/>
+  <text x="136" y="154" font-size="9.5" fill="#cfe0ee">찌매듭 — 수심 5~10m</text>
+
+  <!-- 삼각도래 -->
+  <path d="M118,244 L102,268 L134,268 Z" fill="#dbe4ee" stroke="#5b6b7a" stroke-width="1.3"/>
+  <text x="146" y="262" font-size="11" fill="#ffb703" font-weight="bold">삼각도래</text>
+  <text x="146" y="274" font-size="9" fill="#cfe0ee">무게축(카고)과 미끼축(목줄)을 분리</text>
+  <text x="146" y="285" font-size="9" fill="#cfe0ee">→ 엉킴 방지 · 카고의 존재 이유</text>
+
+  <!-- 아래: 카고 + 봉돌 -->
+  <path d="M110,268 L104,300" stroke="#eef3f7" stroke-width="1.6"/>
+  <g transform="translate(104,300)">
+    <path d="M-16,0 h32 v40 h-32 z" fill="none" stroke="#c9d6e2" stroke-width="1.8"/>
+    <g stroke="#c9d6e2" stroke-width=".9" opacity=".85">
+      <path d="M-16,10 h32"/><path d="M-16,20 h32"/><path d="M-16,30 h32"/>
+      <path d="M-6,0 v40"/><path d="M6,0 v40"/>
+    </g>
+    <g fill="#f4a261" opacity=".9">
+      <circle cx="-9" cy="7" r="2.4"/><circle cx="2" cy="13" r="2.2"/><circle cx="10" cy="6" r="2"/>
+      <circle cx="-4" cy="24" r="2.3"/><circle cx="8" cy="28" r="2.1"/><circle cx="-11" cy="33" r="2"/>
+    </g>
+    <ellipse cx="0" cy="48" rx="9" ry="7" fill="#5b6b7a" stroke="#cfd8e0"/>
+  </g>
+  <text x="10" y="316" font-size="10.5" fill="#fff" font-weight="bold">카고(밑밥통)</text>
+  <text x="10" y="329" font-size="9" fill="#cfe0ee">크릴+집어제 7할만</text>
+  <text x="10" y="341" font-size="9" fill="#cfe0ee">착수 후 대를 들썩여 털기</text>
+  <text x="10" y="360" font-size="9.5" fill="#ffb703">봉돌 8~12호</text>
+
+  <!-- 옆: 목줄 + 바늘 -->
+  <path d="M132,268 L168,308" stroke="#eef3f7" stroke-width="1.5"/>
+  <path d="M168,308 L182,362" stroke="#eef3f7" stroke-width="1.5"/>
+  <path d="M182,362 q0,16 -11,16 q-11,0 -11,-11" stroke="#f4f7fa" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+  <path d="M160,367 l0,-8" stroke="#f4f7fa" stroke-width="2.3" stroke-linecap="round"/>
+  <ellipse cx="175" cy="370" rx="8" ry="5" fill="#f4a261" transform="rotate(20 175 370)"/>
+  <text x="198" y="330" font-size="10" fill="#fff" font-weight="bold">목줄 카본 3호</text>
+  <text x="198" y="342" font-size="9" fill="#cfe0ee">1.5~2m</text>
+  <text x="198" y="366" font-size="9.5" fill="#f4a261">바늘 + 크릴</text>
+
+  <!-- 밑밥 확산 -->
+  <g opacity=".45" fill="#ffd9a0">
+    <circle cx="130" cy="352" r="2.4"/><circle cx="146" cy="368" r="2"/><circle cx="120" cy="376" r="2.6"/>
+    <circle cx="152" cy="392" r="1.9"/><circle cx="134" cy="400" r="2.2"/><circle cx="108" cy="392" r="2"/>
+  </g>
+  <text x="16" y="396" font-size="9" fill="#ffd9a0">밑밥과 미끼가 같은 지점에 내려간다</text>
+  <text x="16" y="416" font-size="9.5" fill="#e63946" font-weight="bold">주의: 1호 찌낚시대로 카고 투척 금지 (대 파손)</text>
+</svg>

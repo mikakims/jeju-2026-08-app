@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 430" width="320" height="430" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+  <defs>
+    <linearGradient id="sea2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a90b8"/><stop offset="55%" stop-color="#17457a"/><stop offset="100%" stop-color="#061729"/>
+    </linearGradient>
+    <linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd8a8"/><stop offset="100%" stop-color="#a8cbe0"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="70" fill="url(#dawn)"/>
+  <circle cx="270" cy="52" r="15" fill="#ff9e3d" opacity=".8"/>
+  <rect y="70" width="320" height="360" fill="url(#sea2)"/>
+  <path d="M0,70 q20,-7 40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none"/>
+
+  <path d="M6,14 L74,44" stroke="#2b2b2b" stroke-width="5.5" stroke-linecap="round"/>
+  <text x="10" y="34" font-size="10" fill="#5a4a3a">원투대 + 4000릴</text>
+  <text x="10" y="46" font-size="9.5" fill="#8a4a2a" font-weight="bold">원줄 나일론 6호</text>
+  <path d="M74,44 L118,98" stroke="#eef3f7" stroke-width="1.8"/>
+  <path d="M118,98 L118,300" stroke="#eef3f7" stroke-width="1.8"/>
+
+  <!-- 대형 구멍찌 -->
+  <ellipse cx="118" cy="112" rx="32" ry="21" fill="#e76f51" stroke="#fff" stroke-width="2.2"/>
+  <ellipse cx="118" cy="105" rx="32" ry="10" fill="#f4a261" opacity=".85"/>
+  <text x="158" y="108" font-size="11" fill="#fff" font-weight="bold">대형 구멍찌 5~8호</text>
+  <text x="158" y="121" font-size="9.5" fill="#dbe9f5">막대찌도 가능</text>
+
+  <!-- 봉돌 -->
+  <ellipse cx="118" cy="160" rx="8" ry="11" fill="#6b7a88" stroke="#cfd8e0"/>
+  <text x="136" y="164" font-size="10" fill="#cfe0ee">봉돌 (찌 부력에 맞춤)</text>
+
+  <!-- 도래 -->
+  <rect x="113" y="200" width="10" height="10" rx="2" fill="#dbe4ee" stroke="#5b6b7a"/>
+  <text x="136" y="209" font-size="10" fill="#cfe0ee">도래</text>
+
+  <!-- 목줄 -->
+  <path d="M66,212 L66,298" stroke="#ffb703" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M62,212 h8 M62,298 h8" stroke="#ffb703" stroke-width="1.4"/>
+  <text x="12" y="250" font-size="10" fill="#ffb703" font-weight="bold">목줄</text>
+  <text x="12" y="263" font-size="9.5" fill="#ffe3a0">카본 5~8호</text>
+  <text x="12" y="276" font-size="9.5" fill="#ffe3a0">2m</text>
+
+  <!-- 활전갱이 -->
+  <g transform="translate(118,320)">
+    <path d="M-30,0 q14,-18 34,-16 q22,2 30,16 q-8,14 -30,16 q-20,2 -34,-16 z" fill="#8fb8d4" stroke="#e8f2fa" stroke-width="1.4"/>
+    <path d="M-30,0 l-14,-11 l3,11 l-3,11 z" fill="#8fb8d4" stroke="#e8f2fa" stroke-width="1.2"/>
+    <circle cx="46" cy="-3" r="3" fill="#0b2545"/>
+    <path d="M-16,-8 q16,4 34,0" stroke="#dbe9f5" stroke-width="1" fill="none" opacity=".7"/>
+  </g>
+  <!-- 코꿰기 바늘 -->
+  <path d="M118,300 L162,312" stroke="#eef3f7" stroke-width="1.6"/>
+  <path d="M162,312 q10,6 4,14" stroke="#f4f7fa" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <text x="176" y="304" font-size="10.5" fill="#ffb703" font-weight="bold">코꿰기</text>
+  <text x="176" y="316" font-size="9" fill="#cfe0ee">콧구멍 관통 —</text>
+  <text x="176" y="327" font-size="9" fill="#cfe0ee">오래 살고 자연스럽게 헤엄</text>
+  <text x="20" y="352" font-size="10" fill="#fff" font-weight="bold">활전갱이 (현장에서 카드채비로 조달)</text>
+
+  <!-- 부시리 접근 -->
+  <g opacity=".55" transform="translate(232,388)">
+    <path d="M-56,0 q20,-22 52,-20 q30,2 42,20 q-12,18 -42,20 q-32,2 -52,-20 z" fill="#2a5d7a" stroke="#8ec5e0" stroke-width="1.2"/>
+    <path d="M-56,0 l-20,-16 l5,16 l-5,16 z" fill="#2a5d7a" stroke="#8ec5e0" stroke-width="1"/>
+    <circle cx="70" cy="-4" r="3" fill="#e8f2fa"/>
+    <path d="M-40,-2 q46,-6 96,-2" stroke="#ffd166" stroke-width="2.5" fill="none" opacity=".8"/>
+  </g>
+  <text x="14" y="396" font-size="10" fill="#8ec5e0" font-weight="bold">부시리 접근 →</text>
+  <text x="14" y="409" font-size="9" fill="#cfe0ee">찌가 들락날락 요동 = 미끼가 도망치는 중</text>
+  <text x="14" y="421" font-size="9" fill="#ffb703">완전히 처박고 줄이 끌려갈 때 챔질!</text>
+</svg>

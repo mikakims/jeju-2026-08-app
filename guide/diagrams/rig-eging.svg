@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 430" width="320" height="430" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+  <defs>
+    <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3f7fa8"/><stop offset="60%" stop-color="#14406e"/><stop offset="100%" stop-color="#061c33"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="60" fill="#1b3a52"/>
+  <rect y="60" width="320" height="370" fill="url(#sea3)"/>
+  <path d="M0,60 q20,-6 40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0" stroke="#cfe0ee" stroke-opacity=".55" stroke-width="2" fill="none"/>
+  <!-- 바닥 -->
+  <path d="M0,398 q40,-16 80,-6 q50,12 92,-10 q46,-24 92,-4 q30,13 56,2 L320,430 L0,430 Z" fill="#0a2338"/>
+  <path d="M60,392 q10,-16 22,-4 q12,12 -2,14 z" fill="#123a52"/>
+  <text x="180" y="418" font-size="9" fill="#5b8bab">바닥 · 수중여 · 해초밭</text>
+
+  <!-- rod -->
+  <path d="M6,12 L70,36" stroke="#2b2b2b" stroke-width="4.5" stroke-linecap="round"/>
+  <text x="10" y="30" font-size="10" fill="#cfe0ee">240 루어대 + 3000릴</text>
+  <text x="10" y="48" font-size="9.5" fill="#8ef0c0">합사 0.8호 (또는 나일론 2호) + 리더</text>
+
+  <!-- 액션 궤적: 캐스팅 → 폴 → 샤크리 → 커튼폴 -->
+  <path d="M70,36 Q170,4 262,64" stroke="#8ef0c0" stroke-width="1.4" fill="none" stroke-dasharray="5 4"/>
+  <text x="150" y="24" font-size="9.5" fill="#8ef0c0">① 캐스팅</text>
+
+  <path d="M262,64 L250,140" stroke="#cfe0ee" stroke-width="1.3" stroke-dasharray="3 3"/>
+  <text x="266" y="108" font-size="9.5" fill="#cfe0ee">②</text>
+  <text x="252" y="122" font-size="9" fill="#cfe0ee">폴(하강)</text>
+
+  <!-- 샤크리 지그재그 -->
+  <path d="M250,140 L214,116 L232,158 L196,132 L214,176 L178,150 L196,196" stroke="#ffb703" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <text x="120" y="112" font-size="10" fill="#ffb703" font-weight="bold">③ 샤크리</text>
+  <text x="112" y="124" font-size="9" fill="#ffe3a0">챡챡 2~3회 들어올림</text>
+
+  <!-- 커튼폴 -->
+  <path d="M196,196 Q182,240 168,286" stroke="#8ef0c0" stroke-width="1.8" fill="none"/>
+  <text x="118" y="236" font-size="10" fill="#8ef0c0" font-weight="bold">④ 커튼폴</text>
+  <text x="96" y="248" font-size="9" fill="#cfe0ee">텐션 유지하며 천천히 하강</text>
+  <text x="96" y="260" font-size="9" fill="#e63946" font-weight="bold">입질은 대부분 여기서!</text>
+
+  <!-- 에기 -->
+  <g transform="translate(168,292) rotate(28)">
+    <path d="M0,0 l38,-7 l6,7 l-6,7 z" fill="#ff5d8f" stroke="#fff" stroke-width="1.2"/>
+    <path d="M6,-5 l10,-9 l3,8 z" fill="#e8f2fa" opacity=".8"/>
+    <path d="M6,5 l10,9 l3,-8 z" fill="#e8f2fa" opacity=".8"/>
+    <g stroke="#f4f7fa" stroke-width="1.6" stroke-linecap="round">
+      <path d="M-2,0 l-9,-7"/><path d="M-2,0 l-10,0"/><path d="M-2,0 l-9,7"/>
+    </g>
+    <circle cx="40" cy="0" r="2.4" fill="#0b2545"/>
+  </g>
+  <text x="196" y="300" font-size="10.5" fill="#fff" font-weight="bold">에기 3.5호</text>
+  <text x="196" y="313" font-size="9" fill="#ffc0d4">낮=내추럴 / 밤=빨강·오렌지</text>
+  <text x="196" y="325" font-size="9" fill="#cfe0ee">얕고 조류 약함 2.5호</text>
+  <text x="196" y="337" font-size="9" fill="#cfe0ee">깊고 바람 강함 3.5호</text>
+
+  <!-- 무늬오징어 -->
+  <g opacity=".75" transform="translate(86,320)">
+    <path d="M0,0 q-8,-30 6,-46 q14,-16 28,0 q14,16 6,46 q-20,10 -40,0 z" fill="#c98fb8" stroke="#f0d4e6" stroke-width="1.2"/>
+    <ellipse cx="20" cy="-30" rx="22" ry="9" fill="#b87aa8" opacity=".55"/>
+    <g stroke="#f0d4e6" stroke-width="1.6" stroke-linecap="round">
+      <path d="M6,4 q-3,16 -8,24"/><path d="M14,5 q-2,18 -4,26"/><path d="M22,5 q2,18 3,26"/><path d="M30,4 q4,16 9,24"/>
+    </g>
+    <circle cx="10" cy="-8" r="3" fill="#2b1a2b"/><circle cx="30" cy="-8" r="3" fill="#2b1a2b"/>
+  </g>
+  <text x="12" y="356" font-size="10" fill="#f0d4e6" font-weight="bold">무늬오징어</text>
+  <text x="12" y="368" font-size="9" fill="#cfe0ee">8월은 준시즌(300g 안팎)</text>
+  <text x="12" y="380" font-size="9" fill="#cfe0ee">본시즌 9~11월</text>
+</svg>

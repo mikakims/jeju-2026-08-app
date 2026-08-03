@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 430" width="320" height="430" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a90b8"/><stop offset="55%" stop-color="#1d4e89"/><stop offset="100%" stop-color="#071a33"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f2fa"/><stop offset="100%" stop-color="#c9e0f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="72" fill="url(#sky)"/>
+  <rect y="72" width="320" height="358" fill="url(#sea)"/>
+  <path d="M0,72 q20,-7 40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0" stroke="#ffffff" stroke-opacity=".65" stroke-width="2" fill="none"/>
+
+  <!-- rod tip + main line -->
+  <path d="M6,14 L74,44" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+  <path d="M74,44 L110,96" stroke="#e9eef3" stroke-width="1.6" fill="none"/>
+  <text x="14" y="34" font-size="10.5" fill="#3a556b">1호 찌낚시대</text>
+
+  <!-- line down -->
+  <path d="M110,96 L110,150" stroke="#e9eef3" stroke-width="1.6"/>
+  <path d="M110,150 L110,246" stroke="#e9eef3" stroke-width="1.6"/>
+  <path d="M110,246 L110,392" stroke="#cfe0ee" stroke-width="1.3" stroke-dasharray="0"/>
+
+  <!-- 찌매듭 + 구슬 -->
+  <path d="M104,86 L116,86" stroke="#ffb703" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="110" cy="94" r="3.4" fill="#f4f7fa" stroke="#5b6b7a"/>
+  <text x="132" y="83" font-size="10.5" fill="#0b2545" font-weight="bold">찌매듭</text>
+  <text x="132" y="96" font-size="9.5" fill="#20303f">+ 구슬 — 수심 조절</text>
+  <path d="M120,88 L130,80" stroke="#0b2545" stroke-width=".8" opacity=".5"/>
+
+  <!-- 구멍찌 (수면) -->
+  <ellipse cx="110" cy="112" rx="27" ry="18" fill="#e76f51" stroke="#fff" stroke-width="2"/>
+  <ellipse cx="110" cy="106" rx="27" ry="9" fill="#f4a261" opacity=".85"/>
+  <rect x="107" y="94" width="6" height="103" fill="#8b3a25" opacity=".25"/>
+  <text x="146" y="110" font-size="11" fill="#fff" font-weight="bold">구멍찌 3B</text>
+  <text x="146" y="123" font-size="9.5" fill="#dbe9f5">수면에 머리만 노출</text>
+
+  <!-- 쿠션고무 + 봉돌 -->
+  <rect x="105" y="150" width="10" height="9" rx="3" fill="#2a9d8f"/>
+  <circle cx="110" cy="168" r="7" fill="#5b6b7a" stroke="#cfd8e0"/>
+  <text x="128" y="158" font-size="10.5" fill="#fff" font-weight="bold">쿠션고무</text>
+  <text x="128" y="175" font-size="11" fill="#ffb703" font-weight="bold">봉돌 3B</text>
+  <text x="128" y="188" font-size="9.5" fill="#cfe0ee">찌와 같은 호수로 짝맞춤</text>
+
+  <!-- 도래 -->
+  <path d="M106,242 h8 v8 h-8 z" fill="#dbe4ee" stroke="#5b6b7a"/>
+  <text x="128" y="250" font-size="10.5" fill="#fff">도래 (소형 8~10호)</text>
+
+  <!-- 목줄 구간 표시 -->
+  <path d="M62,250 L62,390" stroke="#ffb703" stroke-width="1" stroke-dasharray="4 3"/>
+  <path d="M58,250 h8 M58,390 h8" stroke="#ffb703" stroke-width="1.4"/>
+  <text x="10" y="316" font-size="10.5" fill="#ffb703" font-weight="bold">목줄</text>
+  <text x="10" y="330" font-size="9.5" fill="#ffe3a0">카본</text>
+  <text x="10" y="343" font-size="9.5" fill="#ffe3a0">1.5~1.7호</text>
+  <text x="10" y="356" font-size="9.5" fill="#ffe3a0">2~3m</text>
+
+  <!-- 좁쌀봉돌 (옵션) -->
+  <circle cx="110" cy="318" r="3.6" fill="#8da9c4"/>
+  <text x="128" y="322" font-size="9.5" fill="#cfe0ee">좁쌀봉돌 G2~G5 (여부력 조절 시)</text>
+
+  <!-- 바늘 + 크릴 -->
+  <path d="M110,392 q0,16 -11,16 q-11,0 -11,-11" stroke="#f4f7fa" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M88,397 l0,-8" stroke="#f4f7fa" stroke-width="2.4" stroke-linecap="round"/>
+  <ellipse cx="103" cy="400" rx="9" ry="5.5" fill="#f4a261" transform="rotate(18 103 400)"/>
+  <text x="128" y="400" font-size="10.5" fill="#fff" font-weight="bold">벵에돔바늘 5~7호</text>
+  <text x="128" y="413" font-size="9.5" fill="#cfe0ee">미끼: 크릴 / 빵가루</text>
+
+  <!-- 밑밥 구름 -->
+  <g opacity=".5">
+    <circle cx="196" cy="180" r="2.4" fill="#ffd9a0"/><circle cx="212" cy="205" r="2" fill="#ffd9a0"/>
+    <circle cx="188" cy="228" r="2.6" fill="#ffd9a0"/><circle cx="206" cy="252" r="1.9" fill="#ffd9a0"/>
+    <circle cx="192" cy="280" r="2.3" fill="#ffd9a0"/><circle cx="214" cy="160" r="2.1" fill="#ffd9a0"/>
+    <circle cx="176" cy="200" r="1.8" fill="#ffd9a0"/><circle cx="222" cy="232" r="2.2" fill="#ffd9a0"/>
+  </g>
+  <text x="234" y="212" font-size="9.5" fill="#ffd9a0">밑밥 동조</text>
+  <text x="234" y="224" font-size="8.5" fill="#e8c98a" opacity=".9">미끼와 같은 층</text>
+</svg>

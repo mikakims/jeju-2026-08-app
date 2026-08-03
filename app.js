@@ -837,13 +837,19 @@ function detailFish(x) {
     const wins = biteWindows(sp, runs, state.when, station)
     const lim = sp.size_limit?.cm ? ` · ${sp.size_limit.cm}cm 이상${sp.size_limit.measure ? `(${sp.size_limit.measure})` : ''}만` : ''
     return `<div class="bite">
-      <div class="bite-h"><b>${esc(sp.name)}</b> <span class="pill lv">${esc(sp.level)}</span>
+      <div class="bite-h">${sp.photo ? `<img class="bite-ph" loading="lazy" src="${esc(sp.photo)}" alt="">` : ''}
+        <b>${esc(sp.name)}</b> <span class="pill lv">${esc(sp.level)}</span>
         <span class="bite-t">${wins.map((w) => `${fmt(w.s)}–${fmt(w.e)}`).join(', ')}</span></div>
+      ${sp.sci ? `<div class="muted sci">${esc(sp.sci)}${sp.local ? ` · ${esc(sp.local)}` : ''}</div>` : ''}
       <div class="muted">${esc(biteWhy(sp, wins[0]) + lim)}</div>
       <div class="muted">${esc(sp.gear)} / ${esc(sp.bait)}</div>
       <div class="tipline">${esc(sp.tip)}</div>
+      ${sp.guide_tip ? `<div class="tipline alt">${esc(sp.guide_tip)}</div>` : ''}
     </div>`
   }).join('')
+
+  // 저쪽이 발로 뛴 포인트 9곳만 붙어 있다. 나머지 스팟은 이 절이 통째로 안 나온다
+  const gp = x.guide ? (GUIDE?.points ?? []).find((p) => p.n === x.guide) : null
 
   return `
     <h2>${esc(x.name)}</h2>
@@ -871,6 +877,7 @@ function detailFish(x) {
       : `<p class="muted">물때 자료는 ${DB.tide.range.start} ~ ${DB.tide.range.end} 만 넣어뒀어요.</p>`)}
 
     ${sec('노려볼 어종', bites || '<p class="muted">-</p>')}
+    ${gp ? sec('현장 메모', `<div class="guide">${pointCard(gp, { bare: true })}</div>`) : ''}
     ${sec('위치', `<dl class="kv"><dt>주소</dt><dd>${esc(x.addr ?? '-')}</dd></dl>`)}
     ${sec('바로가기', links ? `<div class="links">${links}</div>` : '<p class="muted">등록된 외부 링크가 없어요.</p>')}
     <p class="muted" style="margin-top:14px">금어기·금지체장·금지구역은 상단 <b>📋 규정</b> 에서 볼 수 있어요.</p>
@@ -924,6 +931,181 @@ function detailRules() {
       정리 기준일 ${esc(R.at)}.</p>
   `
 }
+
+/* ── 가이드북 ─────────────────────────────────────────────
+ *
+ * 동업자가 따로 만든 낚시 가이드북(fishing.marketpilot.it)에서 옮겨온 것이다.
+ * 우리에게 없던 축만 골랐다 — 어종 사진 도감 19종, 채비도가 붙은 낚시법 7가지,
+ * 발로 뛴 포인트 현장 메모. 고정 물때표는 안 가져왔다. 그건 우리가 tide.json 으로
+ * 그 날짜에 맞춰 계산하는 게 더 정확하고, 두 벌이 있으면 숫자가 어긋나 보인다.
+ *
+ * 본문은 저쪽 HTML 조각을 그대로 쓴다. 산문을 필드로 쪼개면 강조·목록이 다 죽는다.
+ * 우리 빌드가 만들어 낸 자료(scripts/import-fishing-guide.mjs)라 esc 하지 않는다 —
+ * 대신 클래스가 우리 것과 섞이지 않게 전부 .guide 안에 가둔다. */
+
+const GUIDE = FISH.guide ?? null
+const AUG_STARS = ['비시즌', '★', '★★', '★★★']
+const guideState = { view: 'atlas', filter: 'all' }
+
+/** 도감 필터용 태그. 8월에 아예 없는 어종(aug:0)은 낚시법 태그를 안 단다 —
+ *  "루어" 로 걸러 놓고 못 잡는 종이 뜨면 그게 더 나쁘다 */
+function atlasTags(f) {
+  const t = ['all']
+  if (f.aug === 3) t.push('aug3')
+  if (f.aug > 0) {
+    if (/밤|해질녘|새벽|여명/.test(f.time ?? '')) t.push('night')
+    if (/낮|아침/.test(f.time ?? '')) t.push('day')
+    if (/찌낚시/.test(f.how ?? '')) t.push('float')
+    if (/루어|에깅|이카메탈|지깅/.test(f.how ?? '')) t.push('lure')
+    if (/생미끼/.test(f.how ?? '')) t.push('live')
+  }
+  return t
+}
+
+const ATLAS_FILTERS = [
+  ['all', '전체'], ['aug3', '⭐ 8월 주력'], ['night', '🌙 밤'], ['day', '☀️ 낮'],
+  ['float', '🎣 찌낚시'], ['lure', '🎯 루어·에깅'], ['live', '🐟 생미끼'],
+]
+
+const GUIDE_VIEWS = [
+  ['atlas', '📖 어종'], ['how', '🎣 낚시법'], ['spot', '📍 포인트'], ['tip', '💡 팁·안전'],
+]
+
+const linkline = (label, ls) => (!ls?.length ? ''
+  : `<div class="srcline">${label} ${ls.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`).join('')}</div>`)
+
+const gtable = (t) => (!t ? '' : `<div class="scroller"><table class="cmp">
+  <tr>${t.head.map((h) => `<th>${h}</th>`).join('')}</tr>
+  ${t.rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}
+</table></div>`)
+
+/** 어종 카드 한 장 */
+function atlasCard(f) {
+  const stars = f.aug === 0 ? '8월 없음' : `8월 ${AUG_STARS[f.aug]}`
+  const row = (k, v) => (v ? `<tr><td class="k">${k}</td><td>${v}</td></tr>` : '')
+  return `<div class="fish">
+    <div class="ph">
+      ${f.photo ? `<img loading="lazy" src="${esc(f.photo)}" alt="${esc(f.name)}">` : `<div class="noimg">${esc(f.name)}</div>`}
+      <div class="aug">${stars}</div>
+      ${f.time ? `<div class="time">🕐 ${f.time}</div>` : ''}
+      ${f.credit ? `<div class="credit">${f.credit}</div>` : ''}
+    </div>
+    <div class="bd">
+      ${f.sci ? `<div class="sci">${esc(f.sci)}</div>` : ''}
+      <h3>${esc(f.name)}${f.sid ? ' <span class="pill lv">우리 포인트 연결</span>' : ''}</h3>
+      ${f.local ? `<div class="local">${esc(f.local)}</div>` : ''}
+      <table>
+        ${row('시즌', f.season)}${row('공략 수심', f.depth)}${row('낚시법', f.how)}
+        ${row('미끼', f.bait)}${row('씨알', f.size)}${row('규정', f.rule)}
+      </table>
+      ${f.tip ? `<div class="tip"><b>TIP</b> ${esc(f.tip)}</div>` : ''}
+      ${linkline('출처·참고', f.links)}
+    </div>
+  </div>`
+}
+
+/** 낚시법 카드 한 장 — 채비도 + 도식 + 요령 */
+function methodCard(m) {
+  return `<div class="m-card">
+    <h3>${esc(m.title)}</h3>
+    ${m.meta ? `<div class="meta">${esc(m.meta)}</div>` : ''}
+    ${!m.rig ? '' : `<div class="rigwrap">
+      <figure>
+        <img class="rigimg" loading="lazy" src="guide/${esc(m.rig.img)}" alt="${esc(m.rig.alt ?? '')}">
+        <figcaption class="figcap">${esc(m.rig.cap ?? '')}</figcaption>
+      </figure>
+      <div class="rig">${esc(m.rig.text)}</div>
+    </div>`}
+    ${m.body}
+    ${linkline('출처', m.sources)}
+  </div>`
+}
+
+/** 포인트 카드 한 장. bare 는 스팟 상세 안에 끼워 넣을 때 —
+ *  거기선 제목·지도 링크가 이미 위에 다 있어서 겹친다 */
+function pointCard(p, { bare = false } = {}) {
+  const spots = bare ? [] : (FISH.spots ?? []).filter((s) => p.match.includes(s.name))
+  return `<div class="m-card">
+    ${bare ? '' : `<div class="pt-head"><h3>${esc(p.title)}</h3><span class="dist">${esc(p.dist)}</span></div>`}
+    ${bare || !p.badges.length ? '' : `<div class="sp-badges">${p.badges.map((b) => `<span${b.hot ? ' class="hot"' : ''}>${esc(b.name)}</span>`).join('')}</div>`}
+    ${p.body}
+    ${bare || !spots.length ? '' : `<div class="maplinks">${spots.map((s) => `<button class="maplink ours" data-spot-id="${esc(s.id)}" type="button">우리 자료로 · ${esc(s.name)}</button>`).join('')}</div>`}
+    ${bare ? '' : `<div class="maplinks">${p.maps.map(([t, u]) => `<a class="maplink${/kakao/.test(u) ? ' kakao' : /google/.test(u) ? ' gmap' : ''}" href="${esc(u)}" target="_blank" rel="noopener">${t}</a>`).join('')}</div>`}
+    ${linkline('출처', p.sources)}
+  </div>`
+}
+
+function guideBody() {
+  const G = GUIDE
+  if (guideState.view === 'atlas') {
+    const shown = G.atlas.filter((f) => atlasTags(f).includes(guideState.filter))
+    return `
+      <div class="gfilters">${ATLAS_FILTERS.map(([k, t]) =>
+        `<button class="f${k === guideState.filter ? ' on' : ''}" data-gf="${k}" type="button">${t}</button>`).join('')}</div>
+      <p class="gcount">${shown.length}종 표시 중${guideState.filter === 'all' ? '' : ` (전체 ${G.atlas.length}종)`}</p>
+      <div class="fishgrid">${shown.map(atlasCard).join('')}</div>
+      <p class="gcount">사진은 원 저작자 표기를 그대로 옮겼습니다. 표기 없는 사진은 가이드북 제작자 자료입니다.</p>`
+  }
+  if (guideState.view === 'how') {
+    return `
+      <div class="note blue">${G.notes.method}</div>
+      ${G.methods.map(methodCard).join('')}
+      <h3 class="gsec">📷 태클 실물 참고 — 낚시점에서 이걸 찾으면 됩니다</h3>
+      <div class="tackle">${G.tackle.map((t) => `<div class="tk">
+        <img loading="lazy" src="guide/${esc(t.img)}" alt="${esc(t.name)}">
+        <div class="lb"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span></div></div>`).join('')}</div>
+      <h3 class="gsec">낚시법 × 어종 × 시간대 요약표</h3>
+      ${gtable(G.tables.method)}`
+  }
+  if (guideState.view === 'spot') {
+    return `
+      <div class="note blue">${G.notes.point}</div>
+      ${G.points.map((p) => pointCard(p)).join('')}
+      <h3 class="gsec">포인트 한눈 비교</h3>
+      ${gtable(G.tables.point)}
+      <p class="gcount">여기 9곳은 숙소 기준으로 고른 것입니다. 나머지 ${FISH.spots.length - 9}곳은 낚시 탭 목록에서 보세요.</p>`
+  }
+  return `
+    <div class="note blue">${G.notes.tide}</div>
+    ${G.prose.map((s) => `<h3 class="gsec">${s.title}</h3>${s.html}`).join('')}`
+}
+
+function detailGuide() {
+  if (!GUIDE) return '<h2>가이드</h2><p class="muted">자료가 없습니다.</p>'
+  return `
+    <h2>📖 낚시 가이드</h2>
+    <p class="sub">같이 가는 사람이 따로 정리한 가이드북에서 옮겨왔습니다 ·
+      <a href="${esc(GUIDE.source)}" target="_blank" rel="noopener">원본</a></p>
+    <div class="guide">
+      <div class="gnav">${GUIDE_VIEWS.map(([k, t]) =>
+        `<button class="${k === guideState.view ? 'on' : ''}" data-gv="${k}" type="button">${t}</button>`).join('')}</div>
+      <div id="guide-body">${guideBody()}</div>
+    </div>`
+}
+
+/* 가이드 화면 안의 전환. #detail-body 는 통째로 갈아끼워지니 위임으로 받는다 */
+$('#detail-body').addEventListener('click', (e) => {
+  const nav = e.target.closest('[data-gv]')
+  if (nav) {
+    guideState.view = nav.dataset.gv
+    guideState.filter = 'all'
+    $('#detail-body').innerHTML = detailGuide()
+    $('#detail').scrollTop = 0
+    return
+  }
+  const f = e.target.closest('[data-gf]')
+  if (f) {
+    guideState.filter = f.dataset.gf
+    $('#guide-body').innerHTML = guideBody()
+    return
+  }
+  // 가이드북 포인트 → 우리 스팟 상세(물때·유속·입질 시간이 붙어 있는 쪽)
+  const ours = e.target.closest('[data-spot-id]')
+  if (ours) {
+    const s = (FISH.spots ?? []).find((x) => x.id === ours.dataset.spotId)
+    if (s) openDetail(s)
+  }
+})
 
 function openDetail(item) {
   const full = item.__d != null ? item : { ...item, __d: state.origin ? dist(state.origin, item) : null }
@@ -1348,6 +1530,12 @@ $('#row-fish-species').addEventListener('click', (e) => {
 
 $('#btn-rules').onclick = () => {
   $('#detail-body').innerHTML = detailRules()
+  $('#detail').hidden = false
+  $('#detail').scrollTop = 0
+}
+
+$('#btn-guide').onclick = () => {
+  $('#detail-body').innerHTML = detailGuide()
   $('#detail').hidden = false
   $('#detail').scrollTop = 0
 }

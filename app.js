@@ -386,11 +386,12 @@ function spotSpecies(sp) {
 const map = L.map('map', { zoomControl: false, attributionControl: true })
   .setView([33.45, 126.55], 10)
 L.control.zoom({ position: 'bottomleft' }).addTo(map)
-// 밝은 회색 톤 타일. OSM 기본 타일에 CSS 필터를 씌우는 것보다 글자가 훨씬 잘 읽힌다
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 20,
-  subdomains: 'abcd',
-  attribution: '&copy; OpenStreetMap &copy; CARTO',
+/* OSM 기본 타일. 원래 CARTO 밝은 회색(light_all)을 썼는데, 2026-10 확인해 보니
+ * 키 없이 부르면 타일마다 "API KEY REQUIRED" 워터마크만 내려온다. 지도가 통째로 비어 보였다.
+ * OSM 은 키가 없고 지명이 한글로 나온다. (예전에 어둡게 만들려고 씌웠던 반전 필터는 안 쓴다) */
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map)
 
 let markers = []

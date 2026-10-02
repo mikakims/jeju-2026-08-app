@@ -486,8 +486,8 @@ function currentItems() {
     // 어종을 고르면 낚시점은 자연히 빠진다 — 어종이 없으니까
     if (state.fish !== 'all') items = items.filter((s) => (s.species ?? []).includes(state.fish))
   } else if (state.tab !== 'water') {
-    // 범위밖(서귀포 등)은 반경 추천에서 뺀다 — DB엔 남아 있다
-    items = items.filter((p) => !p.out_of_scope)
+    /* '범위밖' 태그(8월 여행 권역 밖의 서귀포 등)로 숨기던 걸 풀었다.
+     * 남부권을 채운 뒤로는 그 구분이 의미가 없고, 멀리 있는 곳은 반경이 알아서 거른다. */
     // 탭마다 담당하는 분류가 다르다
     items = items.filter((p) =>
       state.tab === 'craft' ? CRAFT_CATS.has(p.cat)
